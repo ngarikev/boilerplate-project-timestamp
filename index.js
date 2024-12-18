@@ -1,36 +1,60 @@
 // index.js
 // where your node app starts
 
-// init project
-var express = require('express');
-var app = express();
-var cors = require('cors');
+// Import dependencies
+const express = require("express");
+const cors = require("cors");
 
-var corsOptions = {
-  origin: "https://en.wikipedia.org/wiki/Cross-origin_resource_sharing",
-  optionsSuccessStatus: 200 // some legacy browsers choke on 204
-}
-// so that your API is remotely testable by FCC 
+// Initialize the app
+const app = express();
 
-app.use(cors(corsOptions));  
+// Enable CORS for FCC testing
+app.use(cors({ optionsSuccessStatus: 200 }));
 
-// http://expressjs.com/en/starter/static-files.html
-app.use(express.static('public'));
+// Serve static files
+app.use(express.static("public"));
 
-// http://expressjs.com/en/starter/basic-routing.html
+// Serve the index.html file on the root route
 app.get("/", function (req, res) {
-  res.sendFile(__dirname + '/views/index.html');
+  res.sendFile(__dirname + "/views/index.html");
 });
 
-
-// your first API endpoint... 
+// API Endpoint: Hello
 app.get("/api/hello", function (req, res) {
-  res.json({greeting: 'hello API'});
+  res.json({ greeting: "hello API" });
 });
 
+// API Endpoint: Timestamp Microservice
+app.get("/api/:date?", function (req, res) {
+  const { date } = req.params; // Get the date parameter
+  let parsedDate;
 
+  // Case 1: No date parameter (return current date)
+  if (!date) {
+    parsedDate = new Date();
+  } 
+  // Case 2: UNIX timestamp (number format)
+  else if (!isNaN(date)) {
+    parsedDate = new Date(parseInt(date));
+  } 
+  // Case 3: Date string
+  else {
+    parsedDate = new Date(date);
+  }
 
-// Listen on port set in environment variable or default to 3000
-var listener = app.listen(process.env.PORT || 3000, function () {
-  console.log('Your app is listening on port ' + listener.address().port);
+  // Handle invalid dates
+  if (parsedDate.toString() === "Invalid Date") {
+    return res.json({ error: "Invalid Date" });
+  }
+
+  // Respond with the timestamp
+  res.json({
+    unix: parsedDate.getTime(), // Unix timestamp in milliseconds
+    utc: parsedDate.toUTCString() // UTC string
+  });
+});
+
+// Start the server
+const listener = app.listen(process.env.PORT || 3000, function () {
+  console.log("Your app is listening on port " + listener.address().port);
 });
